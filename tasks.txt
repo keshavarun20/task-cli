@@ -1,3 +1,0 @@
-Go To Kandy | false
-Learn Java | false
-Buy Eggs | false
