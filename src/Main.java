@@ -54,10 +54,4 @@ public class Main {
         }
     }
 
-// TODO: add priority field to Task (low, medium, high)
-// TODO: implement inheritance — PriorityTask extends Task
-// TODO: add listByStatus() to TaskService — filter completed/incomplete
-// TODO: swap txt file persistence for SQLite
-// TODO: add JLine for proper terminal experience
-// TODO: add Maven/Gradle for dependency management
 }
