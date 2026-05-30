@@ -19,8 +19,8 @@ public class TaskService {
     // Core addTask — creates Task object, adds to list, persists to file
     public void addTask(String title, boolean completed) {
         Task task = new Task();
-        task.title = title;
-        task.completed = completed;
+        task.setTitle(title);
+        task.setCompleted(completed);
         tasks.add(task);
         saveTask();
     }
@@ -28,8 +28,8 @@ public class TaskService {
     // Finds task by title and marks it complete, then persists
     public void completeTask(String title) {
         for (Task t : tasks) {
-            if (t.title.equals(title)) {
-                t.completed = true;
+            if (t.getTitle().equals(title)) {
+                t.setCompleted(true);
             }
         }
         saveTask();
@@ -39,7 +39,7 @@ public class TaskService {
     public void deleteTask(String title) {
         Task toDelete = null;
         for (Task t : tasks) {
-            if (t.title.equals(title)) {
+            if (t.getTitle().equals(title)) {
                 toDelete = t;
             }
         }
@@ -57,7 +57,7 @@ public class TaskService {
     public void saveTask() {
         try (BufferedWriter bWriter = new BufferedWriter(new FileWriter("tasks.txt"))) {
             for (Task t : tasks) {
-                bWriter.write(t.title + " | " + t.completed + "\n");
+                bWriter.write(t.getTitle() + " | " + t.isCompleted() + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -72,8 +72,8 @@ public class TaskService {
             for (String line : lines) {
                 String[] parts = line.split(" \\| ");
                 Task task = new Task();
-                task.title = parts[0];
-                task.completed = Boolean.parseBoolean(parts[1]);
+                task.setTitle(parts[0]);
+                task.setCompleted(Boolean.parseBoolean(parts[1]));
                 tasks.add(task);
             }
         } catch (IOException e) {
