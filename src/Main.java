@@ -13,7 +13,7 @@ public class Main {
         TaskService taskService= new TaskService();
 
         // Load persisted tasks from file into memory on startup
-        taskService.loadTasks();
+        taskService.load();
 
         while (true) {
             System.out.println("\nEnter task (or type exit):");

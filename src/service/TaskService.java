@@ -1,6 +1,7 @@
 package service;
 
 import enums.Priority;
+import interfaces.Persistable;
 import model.PriorityTask;
 import model.Task;
 
@@ -12,7 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TaskService {
+public class TaskService implements Persistable {
 
     // In-memory list of tasks — single source of truth at runtime
     List<Task> tasks = new ArrayList<>();
@@ -28,9 +29,8 @@ public class TaskService {
         task.setTitle(title);
         task.setCompleted(completed);
         task.setPriority(priority);
-        task.setPriority(priority);
         tasks.add(task);
-        saveTask();
+        save();
     }
 
     // Finds a task by title, checks if it's a PriorityTask, then updates its priority
@@ -43,7 +43,7 @@ public class TaskService {
             }
         }
 
-        saveTask();
+        save();
     }
 
     // Finds task by title and marks it complete, then persists
@@ -53,7 +53,7 @@ public class TaskService {
                 t.setCompleted(true);
             }
         }
-        saveTask();
+        save();
     }
 
     // Finds task by title, stores reference, removes after loop to avoid ConcurrentModificationException
@@ -65,7 +65,7 @@ public class TaskService {
             }
         }
         if (toDelete != null) tasks.remove(toDelete);
-        saveTask();
+        save();
     }
 
     // Returns the full task list — Main handles printing
@@ -75,7 +75,8 @@ public class TaskService {
 
     // Overwrites tasks.txt with current state of tasks list
     // FileWriter outside the loop — file opened once, all tasks written, then closed
-    public void saveTask() {
+    @Override
+    public void save() {
         try (BufferedWriter bWriter = new BufferedWriter(new FileWriter("tasks.txt"))) {
             for (Task t : tasks) {
                 if (t instanceof PriorityTask pt) {
@@ -91,7 +92,8 @@ public class TaskService {
 
     // Reads tasks.txt on startup and rebuilds the in-memory tasks list
     // Each line format: "title | completed" — split on " | " to extract fields
-    public void loadTasks() {
+    @Override
+    public void load() {
         try {
             List<String> lines = Files.readAllLines(Path.of("tasks.txt"));
             for (String line : lines) {
