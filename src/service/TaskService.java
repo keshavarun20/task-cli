@@ -1,3 +1,9 @@
+package service;
+
+import enums.Priority;
+import model.PriorityTask;
+import model.Task;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -13,15 +19,30 @@ public class TaskService {
 
     // Convenience overload — completed defaults to false
     public void addTask(String title) {
-        addTask(title, false);
+        addTask(title, false, Priority.LOW);
     }
 
     // Core addTask — creates Task object, adds to list, persists to file
-    public void addTask(String title, boolean completed) {
-        Task task = new Task();
+    public void addTask(String title, boolean completed, Priority priority) {
+        PriorityTask task = new PriorityTask();
         task.setTitle(title);
         task.setCompleted(completed);
+        task.setPriority(priority);
+        task.setPriority(priority);
         tasks.add(task);
+        saveTask();
+    }
+
+    // Finds a task by title, checks if it's a PriorityTask, then updates its priority
+    // Uses instanceof pattern matching to cast safely in one line
+    public void setPriority(Priority priority, String title){
+        for (Task t : tasks) {
+            // Only PriorityTask has a priority field — skip plain Tasks
+            if (t.getTitle().equals(title) && t instanceof PriorityTask pt) {
+                pt.setPriority(priority);
+            }
+        }
+
         saveTask();
     }
 
@@ -57,7 +78,11 @@ public class TaskService {
     public void saveTask() {
         try (BufferedWriter bWriter = new BufferedWriter(new FileWriter("tasks.txt"))) {
             for (Task t : tasks) {
-                bWriter.write(t.getTitle() + " | " + t.isCompleted() + "\n");
+                if (t instanceof PriorityTask pt) {
+                    bWriter.write(t.getTitle() + " | " + t.isCompleted() + " | " + pt.getPriority() + "\n");
+                } else {
+                    bWriter.write(t.getTitle() + " | " + t.isCompleted() + "\n");
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,9 +96,14 @@ public class TaskService {
             List<String> lines = Files.readAllLines(Path.of("tasks.txt"));
             for (String line : lines) {
                 String[] parts = line.split(" \\| ");
-                Task task = new Task();
+                PriorityTask task = new PriorityTask();
                 task.setTitle(parts[0]);
                 task.setCompleted(Boolean.parseBoolean(parts[1]));
+                if (parts.length == 3) {
+                    task.setPriority(Priority.valueOf(parts[2]));
+                } else {
+                    task.setPriority(Priority.LOW); // default
+                }
                 tasks.add(task);
             }
         } catch (IOException e) {

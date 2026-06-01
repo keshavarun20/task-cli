@@ -1,3 +1,7 @@
+import enums.Priority;
+import service.TaskService;
+import model.Task;
+
 import java.util.List;
 import java.util.Scanner;
 
@@ -6,7 +10,7 @@ public class Main {
 
         System.out.println("Task CLI Started");
         Scanner scanner = new Scanner(System.in);
-        TaskService taskService = new TaskService();
+        TaskService taskService= new TaskService();
 
         // Load persisted tasks from file into memory on startup
         taskService.loadTasks();
@@ -20,6 +24,7 @@ public class Main {
 
             boolean isDone = input.toLowerCase().startsWith("done ");
             boolean isDelete = input.toLowerCase().startsWith("delete ");
+            boolean isPriority=input.toLowerCase().startsWith("priority");
 
             if (isDone) {
                 // Extract title after "done " prefix and mark complete
@@ -29,9 +34,28 @@ public class Main {
                 // Extract title after "delete " prefix and remove from list
                 String title = input.split(" ", 2)[1];
                 taskService.deleteTask(title);
+            } else if (isPriority) {
+                String[] parts = input.split(" ");
+
+                // Last word is always the number (1=LOW, 2=MEDIUM, 3=HIGH)
+                String number = parts[parts.length - 1];
+
+                // Strip "priority" prefix and number suffix to isolate the title
+                String title = input.replaceFirst("(?i)priority ", "")
+                        .replaceAll(" " + number + "$", "")
+                        .trim();
+
+                // Convert number to enum — subtract 1 because values() is 0-indexed
+                Priority priority = Priority.values()[Integer.parseInt(number) - 1];
+
+                taskService.setPriority(priority, title);
             } else {
-                // No prefix — treat input as a new task title
-                taskService.addTask(input);
+                if (input.trim().isEmpty()) {
+                    System.out.println("Title is empty");
+                    System.out.println();
+                } else {
+                    taskService.addTask(input);
+                }
             }
 
             // Show updated task list after every action
