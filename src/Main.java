@@ -22,9 +22,11 @@ public class Main {
             // Exit condition — break out of loop
             if (input.equalsIgnoreCase("exit")) break;
 
+            boolean handled = false;
             boolean isDone = input.toLowerCase().startsWith("done ");
             boolean isDelete = input.toLowerCase().startsWith("delete ");
-            boolean isPriority=input.toLowerCase().startsWith("priority");
+            boolean isPriority=input.toLowerCase().startsWith("priority ");
+            boolean isList=input.toLowerCase().startsWith("list ");
 
             if (isDone) {
                 // Extract title after "done " prefix and mark complete
@@ -49,6 +51,12 @@ public class Main {
                 Priority priority = Priority.values()[Integer.parseInt(number) - 1];
 
                 taskService.setPriority(priority, title);
+            } else if (isList) {
+                String[] parts = input.split(" ");
+                boolean status = parts[1].equalsIgnoreCase("done");
+                List<Task> task = taskService.listByStatus(status);
+                printTasks(task);
+                handled = true;
             } else {
                 if (input.trim().isEmpty()) {
                     System.out.println("Title is empty");
@@ -58,8 +66,10 @@ public class Main {
                 }
             }
 
-            // Show updated task list after every action
-            printTasks(taskService.getAllTasks());
+            // Only print all tasks if not already handled
+            if (!handled) {
+                printTasks(taskService.getAllTasks());
+            }
         }
 
         // Final task list on exit

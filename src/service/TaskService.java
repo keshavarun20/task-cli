@@ -111,4 +111,14 @@ public class TaskService {
             System.out.println("No saved tasks found, starting fresh.");
         }
     }
+
+    public List<Task> listByStatus(boolean status) {
+        List<Task> result = new ArrayList<>();
+        for (Task t : tasks) {
+            if (t.isCompleted() == status) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
 }
