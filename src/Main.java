@@ -30,27 +30,17 @@ public class Main {
 
             if (isDone) {
                 // Extract title after "done " prefix and mark complete
-                String title = input.split(" ", 2)[1];
-                taskService.completeTask(title);
+                Integer id =Integer.parseInt(input.split(" ", 2)[1]);
+                taskService.completeTask(id);
             } else if (isDelete) {
                 // Extract title after "delete " prefix and remove from list
-                String title = input.split(" ", 2)[1];
-                taskService.deleteTask(title);
+                Integer id =Integer.parseInt(input.split(" ", 2)[1]);
+                taskService.deleteTask(id);
             } else if (isPriority) {
                 String[] parts = input.split(" ");
-
-                // Last word is always the number (1=LOW, 2=MEDIUM, 3=HIGH)
-                String number = parts[parts.length - 1];
-
-                // Strip "priority" prefix and number suffix to isolate the title
-                String title = input.replaceFirst("(?i)priority ", "")
-                        .replaceAll(" " + number + "$", "")
-                        .trim();
-
-                // Convert number to enum — subtract 1 because values() is 0-indexed
-                Priority priority = Priority.values()[Integer.parseInt(number) - 1];
-
-                taskService.setPriority(priority, title);
+                Integer id = Integer.parseInt(parts[1]);
+                Priority priority = Priority.values()[Integer.parseInt(parts[parts.length - 1]) - 1];
+                taskService.setPriority(priority, id);
             } else if (isList) {
                 String[] parts = input.split(" ");
                 boolean status = parts[1].equalsIgnoreCase("done");

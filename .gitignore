@@ -2,5 +2,6 @@
 *.xml
 tasks.txt
 todo.txt
+notes.txt
 *.class
 out/

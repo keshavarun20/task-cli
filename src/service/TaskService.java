@@ -15,9 +15,9 @@ import java.util.List;
 
 public class TaskService implements Persistable {
 
+    private Integer nextId=1;
     // In-memory list of tasks — single source of truth at runtime
     List<Task> tasks = new ArrayList<>();
-
     // Convenience overload — completed defaults to false
     public void addTask(String title) {
         addTask(title, false, Priority.LOW);
@@ -26,6 +26,7 @@ public class TaskService implements Persistable {
     // Core addTask — creates Task object, adds to list, persists to file
     public void addTask(String title, boolean completed, Priority priority) {
         PriorityTask task = new PriorityTask();
+        task.setId(nextId++);
         task.setTitle(title);
         task.setCompleted(completed);
         task.setPriority(priority);
@@ -35,10 +36,10 @@ public class TaskService implements Persistable {
 
     // Finds a task by title, checks if it's a PriorityTask, then updates its priority
     // Uses instanceof pattern matching to cast safely in one line
-    public void setPriority(Priority priority, String title){
+    public void setPriority(Priority priority, Integer id){
         for (Task t : tasks) {
             // Only PriorityTask has a priority field — skip plain Tasks
-            if (t.getTitle().equals(title) && t instanceof PriorityTask pt) {
+            if (t.getId().equals(id) && t instanceof PriorityTask pt) {
                 pt.setPriority(priority);
             }
         }
@@ -47,9 +48,9 @@ public class TaskService implements Persistable {
     }
 
     // Finds task by title and marks it complete, then persists
-    public void completeTask(String title) {
+    public void completeTask(Integer id) {
         for (Task t : tasks) {
-            if (t.getTitle().equals(title)) {
+            if (t.getId().equals(id)) {
                 t.setCompleted(true);
             }
         }
@@ -57,10 +58,10 @@ public class TaskService implements Persistable {
     }
 
     // Finds task by title, stores reference, removes after loop to avoid ConcurrentModificationException
-    public void deleteTask(String title) {
+    public void deleteTask(Integer id) {
         Task toDelete = null;
         for (Task t : tasks) {
-            if (t.getTitle().equals(title)) {
+            if (t.getId().equals(id)) {
                 toDelete = t;
             }
         }
@@ -80,9 +81,9 @@ public class TaskService implements Persistable {
         try (BufferedWriter bWriter = new BufferedWriter(new FileWriter("tasks.txt"))) {
             for (Task t : tasks) {
                 if (t instanceof PriorityTask pt) {
-                    bWriter.write(t.getTitle() + " | " + t.isCompleted() + " | " + pt.getPriority() + "\n");
+                    bWriter.write(t.getId() + " | " + t.getTitle() + " | " + t.isCompleted() + " | " + pt.getPriority() + "\n");
                 } else {
-                    bWriter.write(t.getTitle() + " | " + t.isCompleted() + "\n");
+                    bWriter.write(t.getId() + " | " + t.getTitle() + " | " + t.isCompleted() + "\n");
                 }
             }
         } catch (IOException e) {
@@ -99,10 +100,11 @@ public class TaskService implements Persistable {
             for (String line : lines) {
                 String[] parts = line.split(" \\| ");
                 PriorityTask task = new PriorityTask();
-                task.setTitle(parts[0]);
-                task.setCompleted(Boolean.parseBoolean(parts[1]));
-                if (parts.length == 3) {
-                    task.setPriority(Priority.valueOf(parts[2]));
+                task.setId(Integer.parseInt(parts[0]));
+                task.setTitle(parts[1]);
+                task.setCompleted(Boolean.parseBoolean(parts[2]));
+                if (parts.length == 4) {
+                    task.setPriority(Priority.valueOf(parts[3]));
                 } else {
                     task.setPriority(Priority.LOW); // default
                 }
@@ -112,6 +114,11 @@ public class TaskService implements Persistable {
             // File doesn't exist yet — first run, nothing to load
             System.out.println("No saved tasks found, starting fresh.");
         }
+
+        nextId = tasks.stream()
+                .mapToInt(Task::getId)
+                .max()
+                .orElse(0)+1;
     }
 
     public List<Task> listByStatus(boolean status) {
