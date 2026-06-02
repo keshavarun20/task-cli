@@ -1,12 +1,12 @@
 package service;
 
 import enums.Priority;
+import enums.Status;
 import interfaces.Persistable;
 import model.PriorityTask;
 import model.Task;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,119 +15,151 @@ import java.util.List;
 
 public class TaskService implements Persistable {
 
-    private Integer nextId=1;
-    // In-memory list of tasks — single source of truth at runtime
-    List<Task> tasks = new ArrayList<>();
-    // Convenience overload — completed defaults to false
+    private static final Path TASKS_FILE = Path.of("tasks.txt");
+
+    private int nextId = 1;
+    private final List<Task> tasks = new ArrayList<>();
+
     public void addTask(String title) {
-        addTask(title, false, Priority.LOW);
+        addTask(title,Status.TODO, Priority.LOW);
     }
 
-    // Core addTask — creates Task object, adds to list, persists to file
-    public void addTask(String title, boolean completed, Priority priority) {
+    public void addTask(String title, Status status, Priority priority) {
         PriorityTask task = new PriorityTask();
+
         task.setId(nextId++);
         task.setTitle(title);
-        task.setCompleted(completed);
+        task.setStatus(status);
         task.setPriority(priority);
+
         tasks.add(task);
         save();
     }
 
-    // Finds a task by title, checks if it's a PriorityTask, then updates its priority
-    // Uses instanceof pattern matching to cast safely in one line
-    public void setPriority(Priority priority, Integer id){
-        for (Task t : tasks) {
-            // Only PriorityTask has a priority field — skip plain Tasks
-            if (t.getId().equals(id) && t instanceof PriorityTask pt) {
-                pt.setPriority(priority);
+    public void setPriority(int id, Priority priority) {
+        for (Task task : tasks) {
+            if (task.getId() == id && task instanceof PriorityTask priorityTask) {
+                priorityTask.setPriority(priority);
+                save();
+                return;
             }
         }
 
-        save();
     }
 
-    // Finds task by title and marks it complete, then persists
-    public void completeTask(Integer id) {
-        for (Task t : tasks) {
-            if (t.getId().equals(id)) {
-                t.setCompleted(true);
-            }
+    public void completeTask(int id) {
+        tasks.stream()
+                .filter(task -> task.getId() == id)
+                .findFirst()
+                .map(task -> {
+                    task.markDone();
+                    save();
+                    return true;
+                });
+    }
+
+    public void deleteTask(int id) {
+        boolean removed = tasks.removeIf(task -> task.getId() == id);
+
+        if (removed) {
+            save();
         }
-        save();
+
     }
 
-    // Finds task by title, stores reference, removes after loop to avoid ConcurrentModificationException
-    public void deleteTask(Integer id) {
-        Task toDelete = null;
-        for (Task t : tasks) {
-            if (t.getId().equals(id)) {
-                toDelete = t;
-            }
-        }
-        if (toDelete != null) tasks.remove(toDelete);
-        save();
-    }
-
-    // Returns the full task list — Main handles printing
     public List<Task> getAllTasks() {
-        return tasks;
+        return new ArrayList<>(tasks);
     }
 
-    // Overwrites tasks.txt with current state of tasks list
-    // FileWriter outside the loop — file opened once, all tasks written, then closed
+    public List<Task> listByStatus(Status status) {
+        List<Task> result = new ArrayList<>();
+
+        for (Task task : tasks) {
+            if (task.getStatus() == status) {
+                result.add(task);
+            }
+        }
+
+        return result;
+    }
+
     @Override
     public void save() {
-        try (BufferedWriter bWriter = new BufferedWriter(new FileWriter("tasks.txt"))) {
-            for (Task t : tasks) {
-                if (t instanceof PriorityTask pt) {
-                    bWriter.write(t.getId() + " | " + t.getTitle() + " | " + t.isCompleted() + " | " + pt.getPriority() + "\n");
-                } else {
-                    bWriter.write(t.getId() + " | " + t.getTitle() + " | " + t.isCompleted() + "\n");
-                }
+        try (BufferedWriter writer = Files.newBufferedWriter(TASKS_FILE)) {
+            for (Task task : tasks) {
+                writer.write(formatTask(task));
+                writer.newLine();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Failed to save tasks: " + e.getMessage());
         }
     }
 
-    // Reads tasks.txt on startup and rebuilds the in-memory tasks list
-    // Each line format: "title | completed" — split on " | " to extract fields
     @Override
     public void load() {
-        try {
-            List<String> lines = Files.readAllLines(Path.of("tasks.txt"));
-            for (String line : lines) {
-                String[] parts = line.split(" \\| ");
-                PriorityTask task = new PriorityTask();
-                task.setId(Integer.parseInt(parts[0]));
-                task.setTitle(parts[1]);
-                task.setCompleted(Boolean.parseBoolean(parts[2]));
-                if (parts.length == 4) {
-                    task.setPriority(Priority.valueOf(parts[3]));
-                } else {
-                    task.setPriority(Priority.LOW); // default
-                }
-                tasks.add(task);
-            }
-        } catch (IOException e) {
-            // File doesn't exist yet — first run, nothing to load
+        tasks.clear();
+
+        if (!Files.exists(TASKS_FILE)) {
             System.out.println("No saved tasks found, starting fresh.");
+            return;
         }
 
+        try {
+            List<String> lines = Files.readAllLines(TASKS_FILE);
+
+            for (String line : lines) {
+                Task task = parseTask(line);
+
+                if (task != null) {
+                    tasks.add(task);
+                }
+            }
+
+            updateNextId();
+        } catch (IOException e) {
+            System.out.println("Failed to load tasks: " + e.getMessage());
+        }
+    }
+
+    private String formatTask(Task task) {
+        if (task instanceof PriorityTask priorityTask) {
+            return task.getId()
+                    + " | " + task.getTitle()
+                    + " | " + task.getStatus()
+                    + " | " + priorityTask.getPriority();
+        }
+
+        return task.getId()
+                + " | " + task.getTitle()
+                + " | " + task.getStatus();
+    }
+
+    private Task parseTask(String line) {
+        String[] parts = line.split(" \\| ");
+
+        if (parts.length < 3) {
+            return null;
+        }
+
+        PriorityTask task = new PriorityTask();
+
+        task.setId(Integer.parseInt(parts[0]));
+        task.setTitle(parts[1]);
+        task.setStatus(Status.valueOf(parts[2].toUpperCase()));
+
+        if (parts.length >= 4) {
+            task.setPriority(Priority.valueOf(parts[3]));
+        } else {
+            task.setPriority(Priority.LOW);
+        }
+
+        return task;
+    }
+
+    private void updateNextId() {
         nextId = tasks.stream()
                 .mapToInt(Task::getId)
                 .max()
-                .orElse(0)+1;
-    }
-
-    public List<Task> listByStatus(boolean status) {
-        List<Task> result = new ArrayList<>();
-        for (Task t : tasks) {
-            if (t.isCompleted() == status) {
-                result.add(t);
-            }
-        }
-        return result;
+                .orElse(0) + 1;
     }
 }
