@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TaskService implements Persistable {
 
@@ -161,5 +162,13 @@ public class TaskService implements Persistable {
                 .mapToInt(Task::getId)
                 .max()
                 .orElse(0) + 1;
+    }
+
+    public Task getTaskById(Integer id) {
+        return tasks.stream()
+                .filter(t-> Objects.equals(t.getId(), id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Task with ID " + id + " not found."));
+
     }
 }

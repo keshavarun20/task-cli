@@ -3,14 +3,18 @@ package parser;
 import enums.Priority;
 import interfaces.Command;
 import commands.*;
+import org.jline.terminal.Terminal;
 import service.TaskService;
 
 public class CommandParser {
 
     private final TaskService taskService;
+    private final Terminal terminal;
 
-    public CommandParser(TaskService taskService) {
+
+    public CommandParser(TaskService taskService, Terminal terminal) {
         this.taskService = taskService;
+        this.terminal = terminal;
     }
 
     public Command parse(String input) {
@@ -32,13 +36,13 @@ public class CommandParser {
                 return parsePriorityCommand(parts);
 
             case "list":
-                return new ListTasksCommand(taskService);
+                return new ListTasksCommand(taskService,terminal);
 
             case "exit":
-                return new ExitCommand();
+                return new ExitCommand(terminal);
 
             default:
-                return new AddTaskCommand(trimmedInput,taskService);
+                return new AddTaskCommand(trimmedInput,taskService,terminal);
         }
     }
 
@@ -48,7 +52,7 @@ public class CommandParser {
         }
 
         String title = input.substring(4).trim();
-        return new AddTaskCommand(title, taskService);
+        return new AddTaskCommand(title, taskService,terminal);
     }
 
     private Command parsePriorityCommand(String[] parts) {
@@ -59,7 +63,7 @@ public class CommandParser {
         int id = Integer.parseInt(parts[1]);
         Priority priority = Priority.valueOf(parts[2].toUpperCase());
 
-        return new SetPriorityCommand( id,taskService, priority);
+        return new SetPriorityCommand( id,taskService, priority,terminal);
     }
 
     private int parseId(String[] parts) {
