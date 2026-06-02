@@ -13,8 +13,6 @@ import org.jline.utils.AttributedStyle;
 import parser.CommandParser;
 import service.TaskService;
 
-import java.util.Scanner;
-
 public class Main {
     public static void main(String[] args) {
         try {
