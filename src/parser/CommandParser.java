@@ -41,6 +41,9 @@ public class CommandParser {
             case "exit":
                 return new ExitCommand(terminal);
 
+            case "help":
+                return new HelpCommand(terminal);
+
             default:
                 return new AddTaskCommand(trimmedInput,taskService,terminal);
         }

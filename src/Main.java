@@ -23,7 +23,7 @@ public class Main {
                     .system(true)
                     .build();
 
-            StringsCompleter mainCommands = new StringsCompleter("add", "delete", "complete", "priority", "list", "exit");
+            StringsCompleter mainCommands = new StringsCompleter("add", "delete", "complete", "priority", "list", "exit", "help");
 
             StringsCompleter priorityValues = new StringsCompleter("HIGH", "MEDIUM", "LOW");
 
@@ -42,10 +42,10 @@ public class Main {
 
             AttributedStringBuilder header = new AttributedStringBuilder();
             header.style(AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN).bold());
-            header.append("\n⚡ TASK MANAGER CLI ⚡\n");
+            header.append("\n⚡ JODO ⚡\n");
             header.style(AttributedStyle.DEFAULT.foreground(2));
             header.style(AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN));
-            header.append("Type 'list' to view tasks, 'exit' to quit.\n");
+            header.append("Type 'help' for commands, 'exit' to quit.\n");
 
             terminal.writer().println(header.toAnsi());
             terminal.flush();
@@ -60,7 +60,7 @@ public class Main {
             while (running) {
                 String prompt = new AttributedStringBuilder()
                         .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN).bold())
-                        .append("task-cli")
+                        .append("jodo-cli")
                         .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.WHITE))
                         .append(" ❯ ")
                         .toAnsi();
