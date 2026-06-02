@@ -1,5 +1,6 @@
 .idea/
 *.xml
+*.iml
 tasks.txt
 todo.txt
 notes.txt
