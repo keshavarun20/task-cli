@@ -11,8 +11,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class TaskService implements Persistable {
 
@@ -73,15 +75,25 @@ public class TaskService implements Persistable {
     }
 
     public List<Task> listByStatus(Status status) {
-        List<Task> result = new ArrayList<>();
 
-        for (Task task : tasks) {
-            if (task.getStatus() == status) {
-                result.add(task);
-            }
-        }
+        return tasks.stream()
+                .filter(t->Objects.equals(t.getStatus(), status))
+                .collect(Collectors.toList());
+    }
 
-        return result;
+    public List<Task> listByPriority(Priority priority) {
+        return tasks.stream()
+                .filter(t -> t instanceof PriorityTask pt && pt.getPriority() == priority)
+                .collect(Collectors.toList());
+    }
+
+    public List<Task> sortByPriority(){
+        return tasks.stream()
+                .sorted(Comparator.comparing(t -> {
+                    if (t instanceof PriorityTask pt) return pt.getPriority().ordinal();
+                    return Integer.MAX_VALUE; // plain Tasks go last
+                }).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override

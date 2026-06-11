@@ -1,6 +1,7 @@
 package parser;
 
 import enums.Priority;
+import enums.Status;
 import interfaces.Command;
 import commands.*;
 import org.jline.terminal.Terminal;
@@ -36,13 +37,30 @@ public class CommandParser {
                 return parsePriorityCommand(parts);
 
             case "list":
-                return new ListTasksCommand(taskService,terminal);
+                if (parts.length > 1) {
+                    String sub = parts[1].toUpperCase();
+                    switch (sub) {
+                        case "DONE":
+                        case "TODO":
+                            return new ListTaskByStatusCommand(Status.valueOf(sub), taskService, terminal);
+                        case "HIGH":
+                        case "MEDIUM":
+                        case "LOW":
+                            return new ListTaskByPriorityCommand(taskService,Priority.valueOf(sub), terminal);
+                        default:
+                            throw new IllegalArgumentException("Usage: list | list done | list todo | list <LOW|MEDIUM|HIGH>");
+                    }
+                }
+                return new ListTasksCommand(taskService, terminal);
 
             case "exit":
                 return new ExitCommand(terminal);
 
             case "help":
                 return new HelpCommand(terminal);
+
+            case "sort":
+                return new SortByPriorityCommand(taskService,terminal);
 
             default:
                 return new AddTaskCommand(trimmedInput,taskService,terminal);
