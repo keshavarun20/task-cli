@@ -96,6 +96,17 @@ public class TaskService implements Persistable {
                 .collect(Collectors.toList());
     }
 
+    public void editTask(Integer id, String title) {
+        Task task= getTaskById(id);
+        task.setTitle(title);
+        save();
+    }
+
+    public void clearAll(){
+        tasks.clear();
+        save();
+    }
+
     @Override
     public void save() {
         try (BufferedWriter writer = Files.newBufferedWriter(TASKS_FILE)) {

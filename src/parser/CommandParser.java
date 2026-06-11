@@ -62,6 +62,17 @@ public class CommandParser {
             case "sort":
                 return new SortByPriorityCommand(taskService,terminal);
 
+            case "edit":
+                if (parts.length < 3) {
+                    throw new IllegalArgumentException("Usage: edit <id> <new title>");
+                }
+                int editId = Integer.parseInt(parts[1]);
+                String newTitle = trimmedInput.substring(trimmedInput.indexOf(parts[2])).trim();
+                return new EditTaskCommand(taskService, newTitle, editId, terminal);
+
+            case "clear":
+                return new ClearAllCommand(taskService, terminal);
+
             default:
                 return new AddTaskCommand(trimmedInput,taskService,terminal);
         }
